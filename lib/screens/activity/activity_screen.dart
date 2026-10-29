@@ -54,20 +54,20 @@ class _ActivityScreenState extends State<ActivityScreen> {
             if (store.activity.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
-                child: Column(children: [
-                  const Expanded(
-                    child: EmptyState(
+                child: Center(
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    const EmptyState(
                       icon: Icons.schedule,
                       title: 'No activity yet',
                       subtitle: 'Buys, sells and conversions land here with full cost details. '
                           'Everything stays on this device.',
                     ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 10),
-                    child: Text('${Brand.name} keeps your data on this device.', style: AppText.micro),
-                  ),
-                ]),
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 10),
+                      child: Text('${Brand.name} keeps your data on this device.', style: AppText.micro),
+                    ),
+                  ]),
+                ),
               )
             else ...[
               SliverToBoxAdapter(child: _FlowSummary(entries: store.activity)),

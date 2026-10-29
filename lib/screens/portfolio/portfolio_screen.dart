@@ -58,7 +58,7 @@ class PortfolioScreen extends StatelessWidget {
               if (holdings.isEmpty)
                 const SliverFillRemaining(
                   hasScrollBody: false,
-                  child: Column(children: [_PortfolioEmpty()]),
+                  child: _PortfolioEmpty(),
                 )
               else ...[
                 SliverToBoxAdapter(child: _HeroCard(value: value, pnl: pnl, dayChange: dayChange)),
@@ -471,10 +471,11 @@ class _PortfolioEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: EmptyState(
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          EmptyState(
             icon: Icons.account_balance_wallet_outlined,
             title: 'Portfolio is empty',
             subtitle: 'Track what you own in one flow. Buy, sell and convert '
@@ -482,12 +483,12 @@ class _PortfolioEmpty extends StatelessWidget {
             ctaLabel: 'Add first purchase',
             onCta: () => showTradeSheet(context, tab: TradeTab.buy),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: Text('${Brand.name} keeps your data on this device.', style: AppText.micro),
-        ),
-      ],
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text('${Brand.name} keeps your data on this device.', style: AppText.micro),
+          ),
+        ],
+      ),
     );
   }
 }
