@@ -31,7 +31,7 @@ class MarketRepository {
   /// Candles + line points for the detail chart. 1H is sliced from daily data
   /// (CoinGecko does not provide finer OHLC on the free endpoint).
   Future<RangeSeries> loadRange(Asset asset, ChartRange range) async {
-    final days = range.CoinGeckoDays;
+    final days = range.apiDays;
     final wantHour = range == ChartRange.h1;
     try {
       final candles = await _api.fetchOhlc(asset.id, days);

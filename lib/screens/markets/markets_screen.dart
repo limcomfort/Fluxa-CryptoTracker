@@ -6,6 +6,7 @@ import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../state/market_store.dart';
 import '../../widgets/common.dart';
+import '../converter/converter_screen.dart' show openConverter;
 import '../search/search_screen.dart';
 import 'asset_detail_screen.dart';
 
@@ -61,11 +62,21 @@ class _MarketsScreenState extends State<MarketsScreen> {
               SliverToBoxAdapter(
                 child: ScreenHeader(
                   title: 'Markets',
-                  actions: IconButton(
-                    icon: const Icon(Icons.search, size: 24),
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const SearchScreen()),
-                    ),
+                  actions: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: 'Converter',
+                        icon: const Icon(Icons.swap_horiz, size: 24),
+                        onPressed: () => openConverter(context),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.search, size: 24),
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const SearchScreen()),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -157,22 +168,21 @@ class _MarketsScreenState extends State<MarketsScreen> {
                   ),
                 ),
               if (loading)
-                const SliverToBoxAdapter(
+                SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Column(
-                      children: [for (var i = 0; i < 9; i++) SkeletonRow()],
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Column(children: [for (var i = 0; i < 9; i++) const SkeletonRow()]),
                   ),
                 )
               else if (filter == MarketFilter.favorites && list.isEmpty)
-                const SliverFillRemaining(
+                SliverFillRemaining(
                   hasScrollBody: false,
                   child: EmptyState(
                     icon: Icons.star_border,
                     title: 'No favorites yet',
                     subtitle: 'Star an asset to keep its price and daily movement in one place.',
                     ctaLabel: 'Explore markets',
+                    onCta: () => setState(() => filter = MarketFilter.all),
                   ),
                 )
               else
@@ -182,7 +192,7 @@ class _MarketsScreenState extends State<MarketsScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.border.withOpacity(0.6)),
+                      border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: Column(

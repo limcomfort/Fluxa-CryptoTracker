@@ -86,7 +86,7 @@ extension ChartRangeX on ChartRange {
         ChartRange.y1 => '1Y',
       };
 
-  int get CoinGeckoDays => switch (this) {
+  int get apiDays => switch (this) {
         ChartRange.h1 => 1,
         ChartRange.d1 => 1,
         ChartRange.w1 => 7,

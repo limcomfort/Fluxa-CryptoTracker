@@ -2,11 +2,11 @@ import 'package:fl_chart/fl_chart.dart'
     show BarAreaData, FlBorderData, FlDotData, FlGridData, FlSpot, FlTitlesData, LineChart, LineChartBarData, LineChartData, LineTouchData;
 import 'package:flutter/material.dart';
 
-import '../core/formatters.dart';
+import '../core/brand.dart';
+import '../core/formatters.dart' as fmt;
 import '../core/theme.dart';
 import '../data/illustrative.dart';
 import '../models/models.dart';
-import '../state/market_store.dart';
 
 /// Coin logo circle: remote image when available, glyph/initials otherwise.
 class CoinBadge extends StatelessWidget {
@@ -18,15 +18,15 @@ class CoinBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final glyph = _shortGlyph(asset.glyph, asset.symbol);
     final bg = brandColorOf(asset);
-    final glyph = asset.glyph.length <= 2 ? asset.glyph : asset.symbol.substring(0, 2);
 
     final inner = asset.imageUrl == null
-        ? Center(child: _glyphText(glyph, size))
+        ? Center(child: _roundText(glyph, size))
         : Image.network(
             asset.imageUrl!,
             fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => Center(child: _glyphText(glyph, size)),
+            errorBuilder: (_, _, _) => Center(child: _roundText(glyph, size)),
           );
 
     return Container(
@@ -38,7 +38,9 @@ class CoinBadge extends StatelessWidget {
     );
   }
 
-  Widget _glyphText(String glyph, double size) => Text(
+  String _shortGlyph(String glyph, String symbol) => glyph.length <= 2 ? glyph : symbol.substring(0, 2);
+
+  Widget _roundText(String glyph, double size) => Text(
         glyph,
         style: TextStyle(
           color: Colors.white,
@@ -110,14 +112,14 @@ class FilterChip2 extends StatelessWidget {
     final style = OutlinedButton.styleFrom(
       side: BorderSide(color: selected ? AppColors.accent : AppColors.border, width: 1.2),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      backgroundColor: selected ? AppColors.accent.withOpacity(0.12) : Colors.transparent,
+      backgroundColor: selected ? AppColors.accent.withValues(alpha: 0.12) : Colors.transparent,
       foregroundColor: selected ? AppColors.accent : AppColors.textDim,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
       textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
       minimumSize: Size.zero,
       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
-    return OutlinedButton(child: Text(label), style: style, onPressed: onTap);
+    return OutlinedButton(style: style, onPressed: onTap, child: Text(label));
   }
 }
 
@@ -298,7 +300,7 @@ class MarketRow extends StatelessWidget {
               ChangeText(asset.changePct24h),
             ]),
           ),
-          if (trailing != null) trailing!,
+          ?trailing,
         ]),
       ),
     );
@@ -317,7 +319,7 @@ class ScreenHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 8, 8, 4),
       child: Row(children: [
         Expanded(child: Text(title, style: AppText.display)),
-        if (actions != null) actions!,
+        ?actions,
       ]),
     );
   }

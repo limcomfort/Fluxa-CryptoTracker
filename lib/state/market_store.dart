@@ -4,10 +4,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/formatters.dart' as fmt;
 import '../data/illustrative.dart';
 import '../data/market_repository.dart';
 import '../models/models.dart';
-import 'formatters.dart' as fmt;
 
 /// Root-side UI state: selected bottom tab + in-shell detail navigation
 /// (the detail screen is shown as a layer above the tabs while the bottom
@@ -60,7 +60,8 @@ class MarketStore extends ChangeNotifier {
   final List<Holding> _holdings = [];
   final List<ActivityEntry> _activity = [];
 
-  UnmodifiableListViewX get assets => UnmodifiableListViewX(_order.map(_assets.get).whereType());
+  List<Asset> get assets =>
+      [for (final id in _order) if (_assets.containsKey(id)) _assets[id]!];
 
   Asset? assetById(String? id) => id == null ? null : _assets[id];
 
@@ -285,16 +286,4 @@ class MarketStore extends ChangeNotifier {
     _ticker.cancel();
     super.dispose();
   }
-}
-
-/// Small convenience wrapper over an unmodifiable snapshot.
-class UnmodifiableListViewX extends Iterable<Asset> {
-  UnmodifiableListViewX(this._iter);
-  final Iterable<Asset?> _iter;
-  @override
-  Iterator<Asset> get iterator => _iter.whereType<Asset>().iterator;
-}
-
-extension MapGetX<K, V> on Map<K, V> {
-  V? get(K? key) => key == null ? null : this[key];
 }

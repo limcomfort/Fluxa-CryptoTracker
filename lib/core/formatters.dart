@@ -26,7 +26,13 @@ String fmtQty(double v) {
   return NumberFormat('0.########').format(v);
 }
 
+/// Plain (no thousands separators) quantity for editable numeric fields.
+String qtyPlain(double v) => NumberFormat('0.########').format(v);
+
 String fmtSignedPct(double pct) => '${_pct.format(pct)}%';
+
+/// "12.5%" without a deterministic sign, for allocation shares.
+String pct1(double pct) => '${NumberFormat('0.#').format(pct)}%';
 
 String fmtSignedUsd(double v) =>
     '${v >= 0 ? '+' : '-'}\$${NumberFormat('#,##0.00').format(v.abs())}';

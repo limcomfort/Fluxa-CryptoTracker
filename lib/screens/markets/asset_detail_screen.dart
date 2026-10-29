@@ -1,9 +1,10 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:fl_chart/fl_chart.dart'
-    show FlBorderData, FlDotData, FlGridData, FlTitlesData, HorizontalLine, LineChart, LineChartBarData, LineChartData, LineTouchData, SideTitles, VerticalLineData;
+    show AxisTitles, BarAreaData, ExtraLinesData, FlBorderData, FlDotData, FlGridData, FlLine, FlSpot, FlTitlesData, HorizontalLine, LineChart, LineChartBarData, LineChartData, LineTouchData, SideTitles;
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' as f;
 import 'package:provider/provider.dart';
 
 import '../../core/formatters.dart' as fmt;
@@ -191,7 +192,7 @@ class _RangeCell extends StatelessWidget {
       child: Container(
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? AppColors.accent.withOpacity(0.18) : Colors.transparent,
+          color: selected ? AppColors.accent.withValues(alpha: 0.18) : Colors.transparent,
           borderRadius: BorderRadius.circular(9),
         ),
         child: Text(
@@ -246,7 +247,7 @@ class _Segment extends StatelessWidget {
           alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
-            color: selected ? AppColors.accent.withOpacity(0.18) : Colors.transparent,
+            color: selected ? AppColors.accent.withValues(alpha: 0.18) : Colors.transparent,
             borderRadius: BorderRadius.circular(7),
           ),
           child: Text(
@@ -481,7 +482,7 @@ class PriceChart extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.accent.withOpacity(0.35),
+                    color: AppColors.accent.withValues(alpha: 0.35),
                     blurRadius: 10,
                     offset: const Offset(0, 2),
                   ),
@@ -524,7 +525,6 @@ class PriceChart extends StatelessWidget {
     final ticks = _tickIdx(n);
     return LineChart(
       LineChartData(
-        duration: Duration.zero,
         minX: 0,
         maxX: (n - 1).toDouble(),
         minY: geom.gridMin,
@@ -622,17 +622,17 @@ List<int> _tickIdx(int n) {
 }
 
 String _axisFmt(double v, double step) {
-  if (step >= 1) return NumberFormat('#,##0').format(v);
+  if (step >= 1) return f.NumberFormat('#,##0').format(v);
   if (step >= 0.1) return v.toStringAsFixed(2);
   if (step >= 0.001) return v.toStringAsFixed(4);
   return v.toStringAsFixed(6);
 }
 
 String _xLabel(DateTime t, ChartRange r) => switch (r) {
-      ChartRange.h1 || ChartRange.d1 => DateFormat('HH:mm').format(t.toUtc()),
-      ChartRange.w1 => DateFormat('E').format(t.toUtc()),
-      ChartRange.m1 => DateFormat('d MMM').format(t.toUtc()),
-      ChartRange.y1 => DateFormat('MMM').format(t.toUtc()),
+      ChartRange.h1 || ChartRange.d1 => f.DateFormat('HH:mm').format(t.toUtc()),
+      ChartRange.w1 => f.DateFormat('E').format(t.toUtc()),
+      ChartRange.m1 => f.DateFormat('d MMM').format(t.toUtc()),
+      ChartRange.y1 => f.DateFormat('MMM').format(t.toUtc()),
     };
 
 String _rangeSubtitle(ChartRange r) => switch (r) {
@@ -718,7 +718,7 @@ class _CandleChartPainter extends CustomPainter {
   void _drawText(Canvas canvas, String text, Offset off, TextStyle style, {double? width}) {
     final tp = TextPainter(
       text: TextSpan(text: text, style: style),
-      textDirection: TextDirection.ltr,
+      textDirection: ui.TextDirection.ltr,
       maxLines: 1,
     )..layout(maxWidth: width ?? 56);
     tp.paint(canvas, off);

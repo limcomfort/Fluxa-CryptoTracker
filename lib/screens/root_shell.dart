@@ -5,12 +5,10 @@ import 'package:provider/provider.dart';
 import '../core/theme.dart';
 import '../state/market_store.dart';
 import 'activity/activity_screen.dart';
-import 'converter/converter_screen.dart';
 import 'markets/asset_detail_screen.dart';
 import 'markets/markets_screen.dart';
 import 'portfolio/portfolio_screen.dart';
 import 'watchlist/watchlist_screen.dart';
-
 class RootShell extends StatelessWidget {
   const RootShell({super.key});
 
@@ -53,6 +51,8 @@ class RootShell extends StatelessWidget {
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: ui.tab,
             onTap: ui.setTab,
+            selectedFontSize: 12,
+            unselectedFontSize: 12,
             items: const [
               BottomNavigationBarItem(
                 icon: Icon(Icons.candlestick_chart_outlined),
@@ -80,8 +80,3 @@ class RootShell extends StatelessWidget {
     );
   }
 }
-
-/// Opening the converter: as a regular pushed route with the app's dark theme.
-Future<void> openConverter(BuildContext context) => Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const ConverterScreen(), fullscreenDialog: true),
-    );

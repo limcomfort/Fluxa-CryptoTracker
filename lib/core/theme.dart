@@ -104,8 +104,6 @@ ThemeData buildAppTheme() {
       backgroundColor: AppColors.bg,
       selectedItemColor: AppColors.accent,
       unselectedItemColor: AppColors.textFaint,
-      selectedFontSize: 12,
-      unselectedFontSize: 12,
       type: BottomNavigationBarType.fixed,
       showUnselectedLabels: true,
     ),
