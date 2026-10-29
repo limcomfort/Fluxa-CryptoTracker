@@ -29,6 +29,13 @@ String fmtQty(double v) {
 /// Plain (no thousands separators) quantity for editable numeric fields.
 String qtyPlain(double v) => NumberFormat('0.########').format(v);
 
+/// Russian plural forms: pluralRu(2, 'актив', 'актива', 'активов') == 'актива'.
+String pluralRu(int n, String one, String few, String many) {
+  if (n % 10 == 1 && n % 100 != 11) return one;
+  if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) return few;
+  return many;
+}
+
 String fmtSignedPct(double pct) => '${_pct.format(pct)}%';
 
 /// "12.5%" without a deterministic sign, for allocation shares.
@@ -39,7 +46,7 @@ String fmtSignedUsd(double v) =>
 
 String fmtUsd(double v) => '\$${NumberFormat('#,##0.00').format(v)}';
 
-final _dayFmt = DateFormat('d MMM y');
+final _dayFmt = DateFormat('d MMM y', 'ru');
 final _hmFmt = DateFormat('HH:mm');
 
 String fmtActivityTime(DateTime t) => '${_dayFmt.format(t)} · ${_hmFmt.format(t)}';
@@ -48,16 +55,16 @@ String dayGroupLabel(DateTime t, DateTime now) {
   final dayDiff = DateTime(now.year, now.month, now.day)
       .difference(DateTime(t.year, t.month, t.day))
       .inDays;
-  if (dayDiff == 0) return 'Today';
-  if (dayDiff == 1) return 'Yesterday';
+  if (dayDiff == 0) return 'Сегодня';
+  if (dayDiff == 1) return 'Вчера';
   return _dayFmt.format(t);
 }
 
 String axisLabelForDuration(Duration span, DateTime t) {
   if (span.inDays <= 1) return _hmFmt.format(t);
-  if (span.inDays <= 7) return DateFormat('E').format(t);
-  if (span.inDays <= 31) return DateFormat('d MMM').format(t);
-  return DateFormat('MMM').format(t);
+  if (span.inDays <= 7) return DateFormat('E', 'ru').format(t);
+  if (span.inDays <= 31) return DateFormat('d MMM', 'ru').format(t);
+  return DateFormat('MMM', 'ru').format(t);
 }
 
 /// Round a span to a "nice" tick step (1-2-5 progression), used by both chart

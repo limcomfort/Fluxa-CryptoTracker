@@ -6,6 +6,7 @@ void main() {
   testWidgets('Fluxa boots to the Markets tab', (tester) async {
     await tester.pumpWidget(const FluxaApp());
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('Markets'), findsOneWidget);
+    // The market summary strip only exists on the Markets tab.
+    expect(find.text('Капитализация'), findsOneWidget);
   });
 }

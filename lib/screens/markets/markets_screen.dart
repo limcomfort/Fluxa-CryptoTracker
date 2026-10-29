@@ -8,7 +8,6 @@ import '../../state/market_store.dart';
 import '../../widgets/common.dart';
 import '../converter/converter_screen.dart' show openConverter;
 import '../search/search_screen.dart';
-import 'asset_detail_screen.dart';
 
 enum MarketFilter { all, favorites, gainers, losers }
 
@@ -43,9 +42,9 @@ class _MarketsScreenState extends State<MarketsScreen> {
     final loading = store.status == MarketStatus.loading;
 
     final footer = switch (store.status) {
-      MarketStatus.loading => const InfoFooter('Loading market prices...'),
-      MarketStatus.offline => const InfoFooter('Illustrative market data · USD'),
-      MarketStatus.ready => const InfoFooter('Live market data · CoinGecko · USD'),
+      MarketStatus.loading => const InfoFooter('Загружаем котировки...'),
+      MarketStatus.offline => const InfoFooter('Демонстрационные данные рынка · USD'),
+      MarketStatus.ready => const InfoFooter('Живые данные рынка · CoinGecko · USD'),
     };
 
     return Scaffold(
@@ -61,12 +60,12 @@ class _MarketsScreenState extends State<MarketsScreen> {
             slivers: [
               SliverToBoxAdapter(
                 child: ScreenHeader(
-                  title: 'Markets',
+                  title: 'Рынки',
                   actions: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        tooltip: 'Converter',
+                        tooltip: 'Конвертер',
                         icon: const Icon(Icons.swap_horiz, size: 24),
                         onPressed: () => openConverter(context),
                       ),
@@ -89,10 +88,10 @@ class _MarketsScreenState extends State<MarketsScreen> {
                         if (f != MarketFilter.all) const SizedBox(width: 8),
                         FilterChip2(
                           label: switch (f) {
-                            MarketFilter.all => 'All',
-                            MarketFilter.favorites => 'Favorites',
-                            MarketFilter.gainers => 'Gainers',
-                            MarketFilter.losers => 'Losers',
+                            MarketFilter.all => 'Все',
+                            MarketFilter.favorites => 'Избранное',
+                            MarketFilter.gainers => 'Растущие',
+                            MarketFilter.losers => 'Падающие',
                           },
                           selected: filter == f,
                           onTap: () => setState(() => filter = f),
@@ -110,7 +109,7 @@ class _MarketsScreenState extends State<MarketsScreen> {
                     children: [
                       Expanded(
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          const Text('Market cap', style: AppText.caption),
+                          const Text('Капитализация', style: AppText.caption),
                           const SizedBox(height: 3),
                           Row(crossAxisAlignment: CrossAxisAlignment.baseline,
                             textBaseline: TextBaseline.alphabetic,
@@ -132,7 +131,7 @@ class _MarketsScreenState extends State<MarketsScreen> {
                       ),
                       Expanded(
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          const Text('24h volume', style: AppText.caption),
+                          const Text('Объём 24ч', style: AppText.caption),
                           const SizedBox(height: 3),
                           Text(fmt.fmtCompactUsd(totals.volume),
                               style: const TextStyle(
@@ -148,11 +147,11 @@ class _MarketsScreenState extends State<MarketsScreen> {
                   padding: EdgeInsets.fromLTRB(16, 10, 16, 2),
                   child: Row(
                     children: [
-                      Expanded(flex: 5, child: Text('Asset', style: AppText.micro)),
-                      Expanded(flex: 4, child: Text('24h trend', style: AppText.micro)),
+                      Expanded(flex: 5, child: Text('Актив', style: AppText.micro)),
+                      Expanded(flex: 4, child: Text('Тренд 24ч', style: AppText.micro)),
                       Expanded(
                         flex: 5,
-                        child: Text('Price / 24h', textAlign: TextAlign.right, style: AppText.micro),
+                        child: Text('Цена / 24ч', textAlign: TextAlign.right, style: AppText.micro),
                       ),
                     ],
                   ),
@@ -179,9 +178,9 @@ class _MarketsScreenState extends State<MarketsScreen> {
                   hasScrollBody: false,
                   child: EmptyState(
                     icon: Icons.star_border,
-                    title: 'No favorites yet',
-                    subtitle: 'Star an asset to keep its price and daily movement in one place.',
-                    ctaLabel: 'Explore markets',
+                    title: 'В избранном пусто',
+                    subtitle: 'Нажмите звёздочку у актива, чтобы закрепить его цену и движение за день в одном месте.',
+                    ctaLabel: 'Смотреть все',
                     onCta: () => setState(() => filter = MarketFilter.all),
                   ),
                 )
@@ -200,9 +199,7 @@ class _MarketsScreenState extends State<MarketsScreen> {
                         for (final a in list) ...[
                           MarketRow(
                             a,
-                            onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                              builder: (_) => AssetDetailScreen(assetId: a.id),
-                            )),
+                            onTap: () => context.read<UiState>().openDetail(a.id),
                           ),
                           if (a != list.last) const Divider(height: 1, indent: 16, endIndent: 16),
                         ],

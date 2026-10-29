@@ -102,7 +102,7 @@ class _ConverterScreenState extends State<ConverterScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(title: const Text('Converter')),
+      appBar: AppBar(title: const Text('Конвертер')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -110,7 +110,7 @@ class _ConverterScreenState extends State<ConverterScreen> {
             _ConvertCard(
               ctrl: _fromCtrl,
               asset: a,
-              label: 'You convert',
+              label: 'Конвертируете',
               accent: false,
               onPick: () => _pick(side: _Side.from),
             ),
@@ -118,7 +118,7 @@ class _ConverterScreenState extends State<ConverterScreen> {
             _ConvertCard(
               ctrl: _toCtrl,
               asset: b,
-              label: 'You get',
+              label: 'Получаете',
               accent: true,
               onPick: () => _pick(side: _Side.to),
             ),
@@ -138,47 +138,48 @@ class _ConverterScreenState extends State<ConverterScreen> {
                     Text(
                       rate > 0
                           ? '1 ${a?.symbol} = ${fmt.qtyPlain(rate)} ${b?.symbol}'
-                          : 'Pick two assets',
+                          : 'Выберите два актива',
                       style: AppText.caption,
                     ),
                     const SizedBox(height: 2),
                     Text(
                       rate > 0
                           ? '1 ${b?.symbol} = ${fmt.qtyPlain(1 / rate)} ${a?.symbol}'
-                          : 'Prices update every minute',
+                          : 'Цены обновляются каждую минуту',
                       style: AppText.caption,
                     ),
                   ]),
                 ),
               ]),
             ),
-            const SizedBox(height: 12),
-            CtaButton(
-              'Convert now',
-              filled: true,
-              onTap: _canConvert() ? () => doConvert(context, a!.id, b!.id, _fromAmt) : null,
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.elevated,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(children: [
+                const Icon(Icons.calculate_outlined, size: 18, color: AppColors.accent),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Чистый калькулятор курсов · сделки не совершаются '
+                    'и позиции не меняются, когда вы смотрите пару.',
+                    style: AppText.micro,
+                  ),
+                ),
+              ]),
             ),
             const SizedBox(height: 6),
             InfoFooter(
-              'Rates from ${store.status == MarketStatus.offline ? 'illustrative' : 'live'} market data · USD',
+              'Курсы из ${store.status == MarketStatus.offline ? 'демонстрационных' : 'живых'} данных рынка · USD',
               showAbout: false,
             ),
           ]),
         ),
       ),
     );
-  }
-
-  bool _canConvert() {
-    final a = context.read<MarketStore>().assetById(_fromId);
-    final b = context.read<MarketStore>().assetById(_toId);
-    return a != null && b != null && a.id != b.id && _fromAmt > 0 && _canTradeQty(a, _fromAmt);
-  }
-
-  bool _canTradeQty(Asset a, double amt) {
-    final store = context.read<MarketStore>();
-    final h = store.holdingOf(a.id);
-    return h == null || h.qty >= amt;
   }
 
   Future<void> _swap() async {
@@ -213,18 +214,6 @@ class _ConverterScreenState extends State<ConverterScreen> {
   }
 }
 
-void doConvert(BuildContext outerCtx, String fromId, String toId, double qty) async {
-  final store = outerCtx.read<MarketStore>();
-  final err = store.executeTrade(type: TradeType.convert, assetId: fromId, qty: qty, targetAssetId: toId);
-  final b = store.assetById(toId);
-  final out = b == null ? 0.0 : qty * store.assetById(fromId)!.price / b.price;
-  if (!outerCtx.mounted) return;
-  ScaffoldMessenger.of(outerCtx).showSnackBar(SnackBar(
-    content: Text(err ?? 'Converted ${fmt.fmtQty(qty)} ${store.assetById(fromId)?.symbol} '
-        '→ ${fmt.fmtQty(out)} ${b?.symbol}'),
-  ));
-}
-
 enum _Side { from, to }
 
 String _trim(String s) {
@@ -247,7 +236,7 @@ class _SwapSeparator extends StatelessWidget {
           ),
           onPressed: onSwap,
           icon: const Icon(Icons.import_export, size: 20),
-          tooltip: 'Swap sides',
+          tooltip: 'Поменять местами',
         ),
       );
 }
@@ -311,7 +300,7 @@ class _ConvertCard extends StatelessWidget {
                 CoinBadge(asset!, size: 24),
                 const SizedBox(width: 7),
               ],
-              Text(asset?.symbol ?? 'Pick', style: const TextStyle(
+              Text(asset?.symbol ?? 'Выбрать', style: const TextStyle(
                   fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.text)),
               const SizedBox(width: 5),
               const Icon(Icons.expand_circle_down_outlined, size: 18, color: AppColors.textFaint),
@@ -357,7 +346,7 @@ class _AssetSearchDialogState extends State<_AssetSearchDialog> {
               autofocus: true,
               onChanged: (v) => setState(() => _q = v.toLowerCase()),
               decoration: const InputDecoration(
-                hintText: 'Search assets',
+                hintText: 'Поиск активов',
                 prefixIcon: Icon(Icons.search),
                 filled: true,
                 fillColor: AppColors.elevated,

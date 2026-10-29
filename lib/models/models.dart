@@ -79,11 +79,11 @@ enum ChartRange { h1, d1, w1, m1, y1 }
 
 extension ChartRangeX on ChartRange {
   String get label => switch (this) {
-        ChartRange.h1 => '1H',
-        ChartRange.d1 => '1D',
-        ChartRange.w1 => '1W',
-        ChartRange.m1 => '1M',
-        ChartRange.y1 => '1Y',
+        ChartRange.h1 => '1Ч',
+        ChartRange.d1 => '24Ч',
+        ChartRange.w1 => '7Д',
+        ChartRange.m1 => '30Д',
+        ChartRange.y1 => '1Г',
       };
 
   int get apiDays => switch (this) {
@@ -95,65 +95,53 @@ extension ChartRangeX on ChartRange {
       };
 }
 
-class TradeType {
-  static const buy = 'buy';
-  static const sell = 'sell';
-  static const convert = 'convert';
+/// Kind of an analytical signal shown on the Signals tab.
+class SignalKind {
+  static const String up = 'up'; // bullish market signal
+  static const String down = 'down'; // bearish market signal
+  static const String watch = 'watch'; // watchlist / portfolio event
+  static const String info = 'info'; // neutral market info
 }
 
-class ActivityEntry {
-  const ActivityEntry({
+/// An auto-generated analytical event (market move, regime shift,
+/// watchlist/portfolio change) persisted locally.
+class SignalEntry {
+  const SignalEntry({
     required this.id,
     required this.ts,
-    required this.type,
-    required this.assetId,
-    required this.assetSymbol,
-    required this.qty,
-    required this.priceUsd,
-    required this.valueUsd,
-    this.counterAssetId,
-    this.counterSymbol,
-    this.counterQty,
+    required this.kind,
+    required this.title,
+    required this.subtitle,
+    this.assetId,
+    this.assetSymbol,
   });
 
   final String id;
   final DateTime ts;
-  final String type; // buy | sell | convert
-  final String assetId;
-  final String assetSymbol;
-  final double qty;
-  final double priceUsd;
-  final double valueUsd;
-  final String? counterAssetId; // for converts
-  final String? counterSymbol;
-  final double? counterQty;
+  final String kind; // up | down | watch | info
+  final String title; // short event headline, e.g. "BTC +4.2% · momentum"
+  final String subtitle; // human context line
+  final String? assetId; // asset the signal is about, if any
+  final String? assetSymbol;
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'ts': ts.millisecondsSinceEpoch,
-        'type': type,
+        'kind': kind,
+        'title': title,
+        'subtitle': subtitle,
         'assetId': assetId,
         'assetSymbol': assetSymbol,
-        'qty': qty,
-        'priceUsd': priceUsd,
-        'valueUsd': valueUsd,
-        'counterAssetId': counterAssetId,
-        'counterSymbol': counterSymbol,
-        'counterQty': counterQty,
       };
 
-  static ActivityEntry fromJson(Map<String, dynamic> j) => ActivityEntry(
+  static SignalEntry fromJson(Map<String, dynamic> j) => SignalEntry(
         id: j['id'] as String,
         ts: DateTime.fromMillisecondsSinceEpoch(j['ts'] as int),
-        type: j['type'] as String,
-        assetId: j['assetId'] as String,
-        assetSymbol: j['assetSymbol'] as String,
-        qty: (j['qty'] as num).toDouble(),
-        priceUsd: (j['priceUsd'] as num).toDouble(),
-        valueUsd: (j['valueUsd'] as num).toDouble(),
-        counterAssetId: j['counterAssetId'] as String?,
-        counterSymbol: j['counterSymbol'] as String?,
-        counterQty: (j['counterQty'] as num?)?.toDouble(),
+        kind: j['kind'] as String,
+        title: j['title'] as String,
+        subtitle: j['subtitle'] as String? ?? '',
+        assetId: j['assetId'] as String?,
+        assetSymbol: j['assetSymbol'] as String?,
       );
 }
 

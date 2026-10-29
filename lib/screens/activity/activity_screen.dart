@@ -8,13 +8,16 @@ import '../../models/models.dart';
 import '../../state/market_store.dart';
 import '../../widgets/common.dart';
 
-/// Activity tab — the trade ledger of the app.
+/// Signals tab — the analytical event feed of the app.
+///
+/// Auto-generated market observations (momentum, regime shifts, 24h
+/// extremes) plus watchlist / portfolio events. No trades whatsoever.
 ///
 /// Structure:
-///   ● Flow summary: total bought / sold / swaps
-///   ● Filters: All · Purchases · Sales · Swaps
+///   ● Pulse summary: bullish / bearish signal counts + tracked assets
+///   ● Filters: All · Bullish · Bearish · Tracking
 ///   ● Entries grouped by day (Today / Yesterday / date)
-///   ● Header menu: clear feed, reset portfolio, about
+///   ● Header menu: clear feed, about
 class ActivityScreen extends StatefulWidget {
   const ActivityScreen({super.key});
 
@@ -22,22 +25,22 @@ class ActivityScreen extends StatefulWidget {
   State<ActivityScreen> createState() => _ActivityScreenState();
 }
 
-enum _ActFilter { all, buys, sells, swaps }
+enum _SigFilter { all, ups, downs, tracking }
 
 class _ActivityScreenState extends State<ActivityScreen> {
-  _ActFilter _filter = _ActFilter.all;
+  _SigFilter _filter = _SigFilter.all;
 
-  bool _matches(ActivityEntry e) => switch (_filter) {
-        _ActFilter.all => true,
-        _ActFilter.buys => e.type == TradeType.buy,
-        _ActFilter.sells => e.type == TradeType.sell,
-        _ActFilter.swaps => e.type == TradeType.convert,
+  bool _matches(SignalEntry e) => switch (_filter) {
+        _SigFilter.all => true,
+        _SigFilter.ups => e.kind == SignalKind.up,
+        _SigFilter.downs => e.kind == SignalKind.down,
+        _SigFilter.tracking => e.kind == SignalKind.watch || e.kind == SignalKind.info,
       };
 
   @override
   Widget build(BuildContext context) {
     final store = context.watch<MarketStore>();
-    final entries = store.activity.where(_matches).toList();
+    final entries = store.signals.where(_matches).toList();
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -47,43 +50,43 @@ class _ActivityScreenState extends State<ActivityScreen> {
           slivers: [
             SliverToBoxAdapter(
               child: ScreenHeader(
-                title: 'Activity',
-                actions: _ActivityMenu(hasEntries: entries.isNotEmpty),
+                title: 'Сигналы',
+                actions: _SignalsMenu(hasEntries: entries.isNotEmpty),
               ),
             ),
-            if (store.activity.isEmpty)
+            if (store.signals.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
                 child: Center(
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
                     const EmptyState(
-                      icon: Icons.schedule,
-                      title: 'No activity yet',
-                      subtitle: 'Buys, sells and conversions land here with full cost details. '
-                          'Everything stays on this device.',
+                      icon: Icons.auto_graph,
+                      title: 'Сигналов пока нет',
+                      subtitle: 'Импульсы рынка, смена режима и события избранного '
+                          'приходят сюда автоматически при обновлении данных.',
                     ),
                     Padding(
                       padding: EdgeInsets.only(bottom: 10),
-                      child: Text('${Brand.name} keeps your data on this device.', style: AppText.micro),
+                      child: Text('${Brand.name} генерирует сигналы локально на этом устройстве.', style: AppText.micro),
                     ),
                   ]),
                 ),
               )
             else ...[
-              SliverToBoxAdapter(child: _FlowSummary(entries: store.activity)),
+              SliverToBoxAdapter(child: _PulseSummary(store: store)),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 14, 16, 2),
                   child: Row(
                     children: [
-                      for (final f in _ActFilter.values) ...[
-                        if (f != _ActFilter.all) const SizedBox(width: 8),
+                      for (final f in _SigFilter.values) ...[
+                        if (f != _SigFilter.all) const SizedBox(width: 8),
                         FilterChip2(
                           label: switch (f) {
-                            _ActFilter.all => 'All',
-                            _ActFilter.buys => 'Purchases',
-                            _ActFilter.sells => 'Sales',
-                            _ActFilter.swaps => 'Swaps',
+                            _SigFilter.all => 'Все',
+                            _SigFilter.ups => 'Рост',
+                            _SigFilter.downs => 'Падение',
+                            _SigFilter.tracking => 'Отслеживание',
                           },
                           selected: _filter == f,
                           onTap: () => setState(() => _filter = f),
@@ -98,12 +101,12 @@ class _ActivityScreenState extends State<ActivityScreen> {
                   hasScrollBody: false,
                   child: EmptyState(
                     icon: switch (_filter) {
-                      _ActFilter.buys => Icons.south_west_rounded,
-                      _ActFilter.sells => Icons.north_east_rounded,
-                      _ => Icons.swap_horiz_rounded,
+                      _SigFilter.ups => Icons.trending_up,
+                      _SigFilter.downs => Icons.trending_down,
+                      _ => Icons.notifications_active_outlined,
                     },
-                    title: 'Nothing here yet',
-                    subtitle: 'No trades match this filter.',
+                    title: 'Здесь пока пусто',
+                    subtitle: 'Сигналов этого типа ещё нет — появятся при обновлении рынка.',
                   ),
                 )
               else
@@ -111,7 +114,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 sliver: SliverToBoxAdapter(
-                  child: InfoFooter('Demo trades only · stored on this device'),
+                  child: InfoFooter('Автоматические аналитические сигналы · хранятся на устройстве'),
                 ),
               ),
             ],
@@ -121,9 +124,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
     );
   }
 
-  Widget _buildGroupedList(BuildContext context, List<ActivityEntry> entries) {
+  Widget _buildGroupedList(BuildContext context, List<SignalEntry> entries) {
     final now = DateTime.now();
-    final groups = <String, List<ActivityEntry>>{};
+    final groups = <String, List<SignalEntry>>{};
     final order = <String>[];
     for (final e in entries) {
       final key = fmt.dayGroupLabel(e.ts, now);
@@ -137,7 +140,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
               child: Text(
-                key == fmt.dayGroupLabel(now, now) ? 'Today' : key,
+                key == fmt.dayGroupLabel(now, now) ? 'Сегодня' : key,
                 style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textFaint),
               ),
             ),
@@ -154,7 +157,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
               child: Column(
                 children: [
                   for (var i = 0; i < groups[key]!.length; i++) ...[
-                    _ActivityRow(e: groups[key]![i]),
+                    _SignalRow(e: groups[key]![i]),
                     if (i != groups[key]!.length - 1)
                       const Divider(height: 1, indent: 66, endIndent: 16),
                   ],
@@ -168,51 +171,48 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 }
 
-// ---------------- summary ----------------
+// ---------------- pulse summary ----------------
 
-class _FlowSummary extends StatelessWidget {
-  const _FlowSummary({required this.entries});
-  final List<ActivityEntry> entries;
+class _PulseSummary extends StatelessWidget {
+  const _PulseSummary({required this.store});
+  final MarketStore store;
 
   @override
   Widget build(BuildContext context) {
-    var bought = 0.0, sold = 0.0, swaps = 0;
-    for (final e in entries) {
-      switch (e.type) {
-        case TradeType.buy:
-          bought += e.valueUsd;
-        case TradeType.sell:
-          sold += e.valueUsd;
+    var ups = 0, downs = 0;
+    for (final e in store.signals) {
+      switch (e.kind) {
+        case SignalKind.up:
+          ups++;
+        case SignalKind.down:
+          downs++;
         default:
-          swaps++;
+          break;
       }
     }
-    final hasAny = bought > 0 || sold > 0 || swaps > 0;
-    if (!hasAny) return const SizedBox(height: 8);
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       child: Row(
         children: [
-          _FlowCard(
-            icon: Icons.south_west_rounded,
-            color: AppColors.green,
-            label: 'In buys',
-            value: bought > 0 ? fmt.fmtCompactUsd(bought) : '—',
-          ),
-          const SizedBox(width: 10),
-          _FlowCard(
+          _PulseCard(
             icon: Icons.north_east_rounded,
-            color: AppColors.red,
-            label: 'Out sales',
-            value: sold > 0 ? fmt.fmtCompactUsd(sold) : '—',
+            color: AppColors.green,
+            label: 'Бычьи',
+            value: '$ups',
           ),
           const SizedBox(width: 10),
-          _FlowCard(
-            icon: Icons.swap_horiz_rounded,
+          _PulseCard(
+            icon: Icons.south_east_rounded,
+            color: AppColors.red,
+            label: 'Медвежьи',
+            value: '$downs',
+          ),
+          const SizedBox(width: 10),
+          _PulseCard(
+            icon: Icons.visibility_outlined,
             color: AppColors.accent,
-            label: 'Swaps',
-            value: swaps > 0 ? '$swaps' : '—',
+            label: 'Отслеживание',
+            value: '${store.holdings.length}',
           ),
         ],
       ),
@@ -220,8 +220,8 @@ class _FlowSummary extends StatelessWidget {
   }
 }
 
-class _FlowCard extends StatelessWidget {
-  const _FlowCard({required this.icon, required this.color, required this.label, required this.value});
+class _PulseCard extends StatelessWidget {
+  const _PulseCard({required this.icon, required this.color, required this.label, required this.value});
   final IconData icon;
   final Color color;
   final String label;
@@ -255,8 +255,8 @@ class _FlowCard extends StatelessWidget {
 
 // ---------------- menu ----------------
 
-class _ActivityMenu extends StatelessWidget {
-  const _ActivityMenu({required this.hasEntries});
+class _SignalsMenu extends StatelessWidget {
+  const _SignalsMenu({required this.hasEntries});
   final bool hasEntries;
 
   @override
@@ -264,35 +264,20 @@ class _ActivityMenu extends StatelessWidget {
     return MenuAnchor(
       menuChildren: [
         MenuItemButton(
-          child: const Text('Clear activity feed'),
+          child: const Text('Очистить ленту'),
           onPressed: () async {
             final confirmed = await _confirm(
               context,
-              title: 'Clear activity feed?',
-              text: 'The trade history will be wiped. Portfolios are kept.',
+              title: 'Очистить ленту сигналов?',
+              text: 'Все сгенерированные сигналы и события будут удалены безвозвратно.',
             );
             if (confirmed && context.mounted) {
-              await context.read<MarketStore>().clearActivity();
+              await context.read<MarketStore>().clearSignals();
             }
           },
         ),
         MenuItemButton(
-          child: const Text('Reset portfolio'),
-          onPressed: () async {
-            final confirmed = await _confirm(
-              context,
-              title: 'Reset portfolio?',
-              text: 'All positions and their cost basis will be erased.',
-            );
-            if (confirmed && context.mounted) {
-              final store = context.read<MarketStore>();
-              await store.clearActivity();
-              await store.clearPortfolio();
-            }
-          },
-        ),
-        MenuItemButton(
-          child: const Text('About Fluxa'),
+          child: const Text('О приложении Fluxa'),
           onPressed: () => Brand.showAbout(context),
         ),
       ],
@@ -306,41 +291,23 @@ class _ActivityMenu extends StatelessWidget {
 
 // ---------------- rows ----------------
 
-class _ActivityRow extends StatelessWidget {
-  const _ActivityRow({required this.e});
-  final ActivityEntry e;
+class _SignalRow extends StatelessWidget {
+  const _SignalRow({required this.e});
+  final SignalEntry e;
 
   @override
   Widget build(BuildContext context) {
-    final ((String, IconData, Color), String, String, (String, Color?)) t = switch (e.type) {
-      TradeType.buy => (
-        ('Buy ${fmt.fmtQty(e.qty)} ${e.assetSymbol}', Icons.south_west_rounded, AppColors.green),
-        '@ ${fmt.fmtPricePlain(e.priceUsd)}',
-        fmt.fmtActivityTime(e.ts),
-        ('-${fmt.fmtUsd(e.valueUsd)}', null),
-      ),
-      TradeType.sell => (
-        ('Sell ${fmt.fmtQty(e.qty)} ${e.assetSymbol}', Icons.north_east_rounded, AppColors.red),
-        '@ ${fmt.fmtPricePlain(e.priceUsd)}',
-        fmt.fmtActivityTime(e.ts),
-        ('+${fmt.fmtUsd(e.valueUsd)}', AppColors.green),
-      ),
-      _ => (
-        (
-          'Swap ${fmt.fmtQty(e.counterQty ?? 0)} ${e.counterSymbol ?? ''}',
-          Icons.swap_horiz_rounded,
-          AppColors.accent,
-        ),
-        '${fmt.fmtQty(e.qty)} ${e.assetSymbol} · ${fmt.fmtUsd(e.valueUsd)}',
-        fmt.fmtActivityTime(e.ts),
-        (fmt.fmtUsd(e.valueUsd), null),
-      ),
+    final (icon: icon, color: color) = switch (e.kind) {
+      SignalKind.up => (icon: Icons.trending_up, color: AppColors.green),
+      SignalKind.down => (icon: Icons.trending_down, color: AppColors.red),
+      SignalKind.watch => (icon: Icons.visibility_outlined, color: AppColors.accent),
+      _ => (icon: Icons.info_outline_rounded, color: AppColors.textDim),
     };
 
-    final (title, icon, color) = t.$1;
-    final (amount, amountColor) = t.$4;
+    final store = context.watch<MarketStore>();
+    final asset = e.assetId == null ? null : store.assetById(e.assetId);
 
-    return Padding(
+    final row = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -354,16 +321,21 @@ class _ActivityRow extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: AppText.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+              Text(e.title, style: AppText.title, maxLines: 1, overflow: TextOverflow.ellipsis),
               const SizedBox(height: 2),
-              Text(t.$2, style: AppText.caption, maxLines: 1, overflow: TextOverflow.ellipsis),
-              Text(t.$3, style: AppText.micro),
+              Text(e.subtitle, style: AppText.caption, maxLines: 1, overflow: TextOverflow.ellipsis),
+              Text('${fmt.fmtActivityTime(e.ts)} · авто-сигнал', style: AppText.micro),
             ]),
           ),
-          Text(amount,
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: amountColor ?? AppColors.text)),
+          if (asset != null) ...[CoinBadge(asset, size: 26), const SizedBox(width: 4)],
         ],
       ),
+    );
+
+    if (asset == null) return row;
+    return InkWell(
+      onTap: () => context.read<UiState>().openDetail(asset.id),
+      child: row,
     );
   }
 }
@@ -375,10 +347,10 @@ Future<bool> _confirm(BuildContext context, {required String title, required Str
       title: Text(title, style: AppText.title),
       content: Text(text, style: AppText.body),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(d, false), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(d, false), child: const Text('Отмена')),
         TextButton(
           onPressed: () => Navigator.pop(d, true),
-          child: const Text('Clear', style: TextStyle(color: AppColors.red)),
+          child: const Text('Очистить', style: TextStyle(color: AppColors.red)),
         ),
       ],
     ),

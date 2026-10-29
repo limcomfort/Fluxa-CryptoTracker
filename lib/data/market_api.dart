@@ -57,7 +57,7 @@ class CoinGeckoClient {
         rank: (m['market_cap_rank'] as num?)?.toInt() ?? 0,
         about: (m['categories'] as List?)?.isNotEmpty == true
             ? (m['categories'] as List).first.toString()
-            : '${m['name']} (${(m['symbol'] as String?)?.toUpperCase()}) digital asset.',
+            : '${m['name']} (${(m['symbol'] as String?)?.toUpperCase()}) цифровой актив рынка.',
         glyph: ((m['symbol'] as String? ?? '').toUpperCase()).length >= 2
             ? (m['symbol'] as String).toUpperCase().substring(0, 2)
             : (m['symbol'] as String? ?? '').toUpperCase(),

@@ -9,7 +9,7 @@ import '../../data/illustrative.dart';
 import '../../models/models.dart';
 import '../../state/market_store.dart';
 import '../../widgets/common.dart';
-import 'trade_sheet.dart';
+import 'position_sheet.dart';
 
 /// Portfolio tab.
 ///
@@ -44,12 +44,12 @@ class PortfolioScreen extends StatelessWidget {
             slivers: [
               SliverToBoxAdapter(
                 child: ScreenHeader(
-                  title: 'Portfolio',
+                  title: 'Портфель',
                   actions: Row(mainAxisSize: MainAxisSize.min, children: [
                     IconButton(
-                      tooltip: 'Trade',
+                      tooltip: 'Отслеживать позицию',
                       icon: const Icon(Icons.add, size: 26),
-                      onPressed: () => showTradeSheet(context),
+                      onPressed: () => showPositionSheet(context),
                     ),
                     _PortfolioMenu(),
                   ]),
@@ -85,9 +85,10 @@ class PortfolioScreen extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
                   sliver: SliverToBoxAdapter(
                     child: Row(children: [
-                      const Text('Positions', style: AppText.caption),
+                      const Text('Позиции', style: AppText.caption),
                       const Spacer(),
-                      Text('${holdings.length} assets', style: AppText.micro),
+                      Text('${holdings.length} ${fmt.pluralRu(holdings.length, 'актив', 'актива', 'активов')}',
+                          style: AppText.micro),
                     ]),
                   ),
                 ),
@@ -114,8 +115,8 @@ class PortfolioScreen extends StatelessWidget {
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   sliver: SliverToBoxAdapter(
-                    child: InfoFooter('${Brand.name} records every fake trade at the market price '
-                        'and keeps the ledger on this device.'),
+                    child: InfoFooter('Только аналитика · позиции отслеживаются вручную · '
+                        'сделки не совершаются.'),
                   ),
                 ),
               ],
@@ -159,7 +160,7 @@ class _HeroCard extends StatelessWidget {
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          const Text('Total value', style: AppText.caption),
+          const Text('Общая стоимость', style: AppText.caption),
           const Spacer(),
           const Icon(Icons.trending_up, size: 16, color: AppColors.textFaint),
           const SizedBox(width: 2),
@@ -171,7 +172,7 @@ class _HeroCard extends StatelessWidget {
         Row(children: [
           Expanded(
             child: _MiniStat(
-              label: '24h change',
+              label: 'Изменение 24ч',
               valueText: dayChange == null ? '—' : fmt.fmtSignedUsd(dayChange!),
               pctText: dayChange == null ? null : fmt.fmtSignedPct(value > 0 ? dayChange! / value * 100 : 0),
               color: (dayChange ?? 0) >= 0 ? AppColors.green : AppColors.red,
@@ -180,7 +181,7 @@ class _HeroCard extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: _MiniStat(
-              label: 'P&L all time',
+              label: 'P&L за всё время',
               valueText: fmt.fmtSignedUsd(pnl.pnl),
               pctText: fmt.fmtSignedPct(pnl.pnlPct),
               color: pnl.pnl >= 0 ? AppColors.green : AppColors.red,
@@ -275,9 +276,9 @@ class _MoversStrip extends StatelessWidget {
     }
 
     return Row(children: [
-      tile('Top asset', item: best, isTop: true),
+      tile('Лучший актив', item: best, isTop: true),
       const SizedBox(width: 10),
-      tile('Weakest asset', item: flop, isTop: false),
+      tile('Слабейший актив', item: flop, isTop: false),
     ]);
   }
 }
@@ -307,7 +308,7 @@ class _PositionRow extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(asset.name, style: AppText.title, maxLines: 1, overflow: TextOverflow.ellipsis),
               const SizedBox(height: 2),
-              Text('${fmt.fmtQty(holding.qty)} ${asset.symbol} · avg ${fmt.fmtPricePlain(holding.avgCost)}',
+              Text('${fmt.fmtQty(holding.qty)} ${asset.symbol} · ср. ${fmt.fmtPricePlain(holding.avgCost)}',
                   style: AppText.caption, maxLines: 1, overflow: TextOverflow.ellipsis),
             ]),
           ),
@@ -382,7 +383,7 @@ class _AllocationDonut extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Allocation', style: AppText.caption),
+                const Text('Распределение', style: AppText.caption),
                 const SizedBox(height: 8),
                 Expanded(
                   child: SingleChildScrollView(
@@ -430,12 +431,12 @@ class _PortfolioMenu extends StatelessWidget {
     return MenuAnchor(
       menuChildren: [
         MenuItemButton(
-          child: const Text('Reset portfolio'),
+          child: const Text('Сбросить отслеживание'),
           onPressed: () async {
             final confirmed = await _confirm(
               context,
-              title: 'Reset portfolio?',
-              text: 'All positions and their cost basis will be erased. Trade history stays.',
+              title: 'Сбросить позиции?',
+              text: 'Все отслеживаемые позиции и их базовая стоимость будут удалены. История сигналов останется.',
             );
             if (confirmed && context.mounted) {
               await context.read<MarketStore>().clearPortfolio();
@@ -443,18 +444,18 @@ class _PortfolioMenu extends StatelessWidget {
           },
         ),
         MenuItemButton(
-          child: const Text('Load demo data'),
+          child: const Text('Загрузить демо-данные'),
           onPressed: () async {
             await context.read<MarketStore>().seedDemoData();
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Loaded 5 demo positions and trade feed')),
+                const SnackBar(content: Text('Загружено 5 демо-позиций и подборка сигналов')),
               );
             }
           },
         ),
         MenuItemButton(
-          child: const Text('About Fluxa'),
+          child: const Text('О приложении Fluxa'),
           onPressed: () => Brand.showAbout(context),
         ),
       ],
@@ -476,16 +477,16 @@ class _PortfolioEmpty extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           EmptyState(
-            icon: Icons.account_balance_wallet_outlined,
-            title: 'Portfolio is empty',
-            subtitle: 'Track what you own in one flow. Buy, sell and convert '
-                'at the current market prices.',
-            ctaLabel: 'Add first purchase',
-            onCta: () => showTradeSheet(context, tab: TradeTab.buy),
+            icon: Icons.insights,
+            title: 'Пока ничего не отслеживается',
+            subtitle: 'Добавьте активы, за которыми следите — количество и средняя '
+                'цена питают аналитику P&L и распределения.',
+            ctaLabel: 'Отследить первую позицию',
+            onCta: () => showPositionSheet(context),
           ),
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
-            child: Text('${Brand.name} keeps your data on this device.', style: AppText.micro),
+            child: Text('${Brand.name} хранит ваши данные на этом устройстве.', style: AppText.micro),
           ),
         ],
       ),
@@ -500,10 +501,10 @@ Future<bool> _confirm(BuildContext context, {required String title, required Str
       title: Text(title, style: AppText.title),
       content: Text(text, style: AppText.body),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(d, false), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(d, false), child: const Text('Отмена')),
         TextButton(
           onPressed: () => Navigator.pop(d, true),
-          child: const Text('Reset', style: TextStyle(color: AppColors.red)),
+          child: const Text('Сбросить', style: TextStyle(color: AppColors.red)),
         ),
       ],
     ),

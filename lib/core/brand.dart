@@ -7,7 +7,7 @@ class Brand {
   Brand._();
 
   static const name = 'Fluxa';
-  static const tagline = 'Go with the flow of the market';
+  static const tagline = 'Идите в потоке рынка';
   static const version = '1.0.0';
   static const copyright = '© 2026 Fluxa';
 
@@ -18,10 +18,10 @@ class Brand {
       applicationVersion: version,
       applicationIcon: const _BrandMark(),
       applicationLegalese: '$copyright\n\n$tagline.\n\n'
-          'Market data: CoinGecko public API. When the API is unreachable '
-          'the app keeps the last saved prices and falls back to '
-          'illustrative market data. Portfolio, watchlist and activity '
-          'are stored locally on this device.',
+          'Данные рынка: публичный API CoinGecko. Если API недоступен, '
+          'приложение держит последние сохранённые цены и переходит на '
+          'демонстрационные данные. Портфель, избранное и сигналы '
+          'хранятся локально на этом устройстве.',
     );
   }
 }

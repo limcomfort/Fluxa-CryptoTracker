@@ -43,7 +43,7 @@ class _SearchScreenState extends State<SearchScreen> {
             autofocus: true,
             style: const TextStyle(fontSize: 16, color: AppColors.text),
             decoration: InputDecoration(
-              hintText: 'Search name or symbol',
+              hintText: 'Название или тикер',
               hintStyle: const TextStyle(color: AppColors.textFaint),
               filled: true,
               fillColor: AppColors.card,
@@ -72,8 +72,8 @@ class _SearchScreenState extends State<SearchScreen> {
             ? Center(
                 child: EmptyState(
                   icon: Icons.search_off,
-                  title: 'No results',
-                  subtitle: "Nothing matches '$_q' in the top markets.",
+                  title: 'Ничего не найдено',
+                  subtitle: 'По запросу «$_q» совпадений в топ-рынках нет.',
                 ),
               )
             : ListView.separated(

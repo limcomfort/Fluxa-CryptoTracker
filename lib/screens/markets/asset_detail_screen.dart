@@ -33,7 +33,7 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
     final store = context.watch<MarketStore>();
     final asset = store.assetById(widget.assetId);
     if (asset == null) {
-      return const Scaffold(body: Center(child: Text('Asset is unavailable', style: AppText.title)));
+      return const Scaffold(body: Center(child: Text('Данные по активу недоступны', style: AppText.title)));
     }
     final fav = store.isFavorite(asset.id);
     final isUp = asset.isUp;
@@ -44,7 +44,14 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-          onPressed: context.read<UiState>().closeDetail,
+          tooltip: 'Назад',
+          onPressed: () {
+            // Works for both navigation styles: pushed route or the
+            // in-shell detail layer handled by RootShell's PopScope.
+            final hadRoute = Navigator.of(context).canPop();
+            context.read<UiState>().closeDetail();
+            if (hadRoute && context.mounted) Navigator.of(context).maybePop();
+          },
         ),
         centerTitle: true,
         title: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -121,7 +128,7 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(children: [
-                const Text('Price chart', style: AppText.caption),
+                const Text('График цены', style: AppText.caption),
                 const Spacer(),
                 _ModeToggle(
                   mode: _mode,
@@ -145,17 +152,17 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Market statistics',
+                const Text('Статистика рынка',
                     style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.text)),
                 const SizedBox(height: 14),
                 Row(children: [
-                  _StatCell(label: '24h high', value: fmt.fmtUsdPrice(asset.high24h)),
-                  _StatCell(label: '24h low', value: fmt.fmtUsdPrice(asset.low24h)),
+                  _StatCell(label: 'Максимум 24ч', value: fmt.fmtUsdPrice(asset.high24h)),
+                  _StatCell(label: 'Минимум 24ч', value: fmt.fmtUsdPrice(asset.low24h)),
                 ]),
                 const SizedBox(height: 14),
                 Row(children: [
-                  _StatCell(label: 'Market cap', value: fmt.fmtCompactUsd(asset.marketCap)),
-                  _StatCell(label: '24h volume', value: fmt.fmtCompactUsd(asset.volume24h)),
+                  _StatCell(label: 'Капитализация', value: fmt.fmtCompactUsd(asset.marketCap)),
+                  _StatCell(label: 'Объём 24ч', value: fmt.fmtCompactUsd(asset.volume24h)),
                 ]),
               ]),
             ),
@@ -166,7 +173,7 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
             const SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: InfoFooter(live ? 'Live market data · CoinGecko · USD' : 'Illustrative market data · USD'),
+              child: InfoFooter(live ? 'Живые данные рынка · CoinGecko · USD' : 'Демонстрационные данные рынка · USD'),
             ),
             const SizedBox(height: 8),
           ],
@@ -223,8 +230,8 @@ class _ModeToggle extends StatelessWidget {
         border: Border.all(color: AppColors.border),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        _Segment('Line', mode == ChartMode.line, () => onChanged(ChartMode.line)),
-        _Segment('Candles', mode == ChartMode.candles, () => onChanged(ChartMode.candles)),
+        _Segment('Линия', mode == ChartMode.line, () => onChanged(ChartMode.line)),
+        _Segment('Свечи', mode == ChartMode.candles, () => onChanged(ChartMode.candles)),
       ]),
     );
   }
@@ -294,7 +301,7 @@ class _AboutTile extends StatelessWidget {
         child: Row(children: [
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('About ${asset.name}',
+              Text('О монете ${asset.name}',
                   style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.text)),
               const SizedBox(height: 4),
               Text(asset.about, style: AppText.body, maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -326,13 +333,13 @@ class _AboutTile extends StatelessWidget {
           const SizedBox(height: 16),
           Text(asset.about, style: AppText.body),
           const SizedBox(height: 18),
-          _sheetRow('24h high', fmt.fmtUsdPrice(asset.high24h)),
-          _sheetRow('24h low', fmt.fmtUsdPrice(asset.low24h)),
-          _sheetRow('Market cap', fmt.fmtCompactUsd(asset.marketCap)),
-          _sheetRow('24h volume', fmt.fmtCompactUsd(asset.volume24h)),
-          _sheetRow('24h change', fmt.fmtSignedPct(asset.changePct24h)),
-          _sheetRow('Data source',
-              '${store.source == DataSource.live ? 'CoinGecko · live' : 'Illustrative (offline fallback)'} · USD'),
+          _sheetRow('Максимум 24ч', fmt.fmtUsdPrice(asset.high24h)),
+          _sheetRow('Минимум 24ч', fmt.fmtUsdPrice(asset.low24h)),
+          _sheetRow('Капитализация', fmt.fmtCompactUsd(asset.marketCap)),
+          _sheetRow('Объём 24ч', fmt.fmtCompactUsd(asset.volume24h)),
+          _sheetRow('Изменение 24ч', fmt.fmtSignedPct(asset.changePct24h)),
+          _sheetRow('Источник данных',
+              '${store.source == DataSource.live ? 'CoinGecko · в реальном времени' : 'Демонстрационные (офлайн-резерв)'} · USD'),
         ]),
       ),
     );
@@ -630,17 +637,17 @@ String _axisFmt(double v, double step) {
 
 String _xLabel(DateTime t, ChartRange r) => switch (r) {
       ChartRange.h1 || ChartRange.d1 => f.DateFormat('HH:mm').format(t.toUtc()),
-      ChartRange.w1 => f.DateFormat('E').format(t.toUtc()),
-      ChartRange.m1 => f.DateFormat('d MMM').format(t.toUtc()),
-      ChartRange.y1 => f.DateFormat('MMM').format(t.toUtc()),
+      ChartRange.w1 => f.DateFormat('E', 'ru').format(t.toUtc()),
+      ChartRange.m1 => f.DateFormat('d MMM', 'ru').format(t.toUtc()),
+      ChartRange.y1 => f.DateFormat('MMM', 'ru').format(t.toUtc()),
     };
 
 String _rangeSubtitle(ChartRange r) => switch (r) {
-      ChartRange.h1 => '1 hour',
-      ChartRange.d1 => '24 hours',
-      ChartRange.w1 => '7 days',
-      ChartRange.m1 => '30 days',
-      ChartRange.y1 => '1 year',
+      ChartRange.h1 => '1 час',
+      ChartRange.d1 => '24 часа',
+      ChartRange.w1 => '7 дней',
+      ChartRange.m1 => '30 дней',
+      ChartRange.y1 => '1 год',
     };
 
 /// Candlestick painter with the same axis geometry as the fl_chart line mode.

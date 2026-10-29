@@ -26,12 +26,12 @@ class WatchlistScreen extends StatelessWidget {
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              const SliverToBoxAdapter(child: ScreenHeader(title: 'Watchlist')),
+              SliverToBoxAdapter(child: ScreenHeader(title: 'Избранное')),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
                   child: Text(
-                    '${list.length} starred ${list.length == 1 ? 'asset' : 'assets'} · updated every minute',
+                    'В избранном ${list.length} ${_plural(list.length)} · обновляется каждую минуту',
                     style: AppText.body,
                   ),
                 ),
@@ -41,9 +41,9 @@ class WatchlistScreen extends StatelessWidget {
                   hasScrollBody: false,
                   child: EmptyState(
                     icon: Icons.star_border,
-                    title: 'Nothing on the watchlist',
-                    subtitle: 'Tap the star on any asset to pin its live price here.',
-                    ctaLabel: 'Explore markets',
+                    title: 'В избранном пусто',
+                    subtitle: 'Нажмите звёздочку у любого актива, чтобы закрепить его цену здесь.',
+                    ctaLabel: 'Открыть рынки',
                     onCta: () => ui.setTab(0),
                   ),
                 )
@@ -81,8 +81,8 @@ class WatchlistScreen extends StatelessWidget {
                 sliver: SliverToBoxAdapter(
                   child: InfoFooter(
                     store.status == MarketStatus.offline
-                        ? 'Illustrative market data · USD'
-                        : 'Live market data · CoinGecko · USD',
+                        ? 'Демонстрационные данные рынка · USD'
+                        : 'Живые данные рынка · CoinGecko · USD',
                   ),
                 ),
               ),
@@ -92,4 +92,11 @@ class WatchlistScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Russian plural forms: 1 актив / 2 актива / 5 активов.
+String _plural(int n) {
+  if (n % 10 == 1 && n % 100 != 11) return 'актив';
+  if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) return 'актива';
+  return 'активов';
 }

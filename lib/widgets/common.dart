@@ -182,16 +182,16 @@ class OfflineBanner extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
-            Text('Unable to refresh prices', style: AppText.title),
+            Text('Не удалось обновить цены', style: AppText.title),
             SizedBox(height: 3),
-            Text('Market API is unavailable.\nShowing the last saved prices.', style: AppText.body),
+            Text('Рыночный API недоступен.\nПоказаны последние сохранённые цены.', style: AppText.body),
           ]),
         ),
         const SizedBox(width: 8),
         OutlinedButton.icon(
           onPressed: onRetry,
           icon: const Icon(Icons.refresh, size: 18),
-          label: const Text('Retry'),
+          label: const Text('Повторить'),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.accent,
             side: const BorderSide(color: AppColors.accent, width: 1.2),
