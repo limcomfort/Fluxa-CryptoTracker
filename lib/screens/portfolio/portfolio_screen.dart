@@ -443,6 +443,17 @@ class _PortfolioMenu extends StatelessWidget {
           },
         ),
         MenuItemButton(
+          child: const Text('Load demo data'),
+          onPressed: () async {
+            await context.read<MarketStore>().seedDemoData();
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Loaded 5 demo positions and trade feed')),
+              );
+            }
+          },
+        ),
+        MenuItemButton(
           child: const Text('About Fluxa'),
           onPressed: () => Brand.showAbout(context),
         ),

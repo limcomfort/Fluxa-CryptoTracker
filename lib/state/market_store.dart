@@ -284,6 +284,62 @@ class MarketStore extends ChangeNotifier {
     await _persist();
   }
 
+  /// Deterministic demo dataset: five positions and a matching trade feed.
+  Future<void> seedDemoData() async {
+    final now = DateTime.now();
+    String stamp() => now.millisecondsSinceEpoch.toRadixString(36);
+    DateTime ago(Duration d) => now.subtract(d);
+
+    ActivityEntry buy(String assetId, String symbol, double qty, double price, DateTime ts) =>
+        ActivityEntry(
+          id: 'demo-$assetId-${stamp()}-${ts.millisecondsSinceEpoch.toRadixString(36)}',
+          ts: ts,
+          type: TradeType.buy,
+          assetId: assetId,
+          assetSymbol: symbol,
+          qty: qty,
+          priceUsd: price,
+          valueUsd: qty * price,
+        );
+
+    _activity
+      ..clear()
+      ..addAll([
+        buy('bitcoin', 'BTC', 0.0521, 67432.80, ago(const Duration(hours: 2))),
+        buy('ethereum', 'ETH', 1.204, 3615.60, ago(const Duration(hours: 26))),
+        ActivityEntry(
+          id: 'demo-convert-${stamp()}',
+          ts: ago(const Duration(hours: 30)),
+          type: TradeType.convert,
+          assetId: 'solana',
+          assetSymbol: 'SOL',
+          qty: 14.4,
+          priceUsd: 119.60,
+          valueUsd: 1722.24,
+          counterAssetId: 'binancecoin',
+          counterSymbol: 'BNB',
+          counterQty: 1.87,
+        ),
+        buy('avalanche-2', 'AVAX', 42.0, 40.44, ago(const Duration(hours: 78))),
+        buy('cardano', 'ADA', 3500, 0.4621, ago(const Duration(hours: 140))),
+      ]);
+
+    // Cost 21% lower than "entry price" so positions show a plausible P&L.
+    double basisOf(double qty, double price) => qty * price / 1.21;
+    _holdings
+      ..clear()
+      ..addAll([
+        Holding(assetId: 'bitcoin', qty: 0.0521, costBasis: basisOf(0.0521, 67432.80)),
+        Holding(assetId: 'ethereum', qty: 1.204, costBasis: basisOf(1.204, 3615.60)),
+        Holding(assetId: 'binancecoin', qty: 1.87, costBasis: basisOf(1.87, 921.10)),
+        Holding(assetId: 'avalanche-2', qty: 42, costBasis: basisOf(42, 40.44)),
+        Holding(assetId: 'cardano', qty: 3500, costBasis: basisOf(3500, 0.4621)),
+      ]);
+
+    notifyListeners();
+    await _persist();
+  }
+
   static String _entryId() =>
       DateTime.now().microsecondsSinceEpoch.toRadixString(36) + (99 + DateTime.now().millisecond).toRadixString(36);
 
