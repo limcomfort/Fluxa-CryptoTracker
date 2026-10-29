@@ -270,6 +270,20 @@ class MarketStore extends ChangeNotifier {
 
   void _insertActivity(ActivityEntry e) => _activity.insert(0, e);
 
+  /// Wipes positions — refunds? No: pure erasure (demo data tool).
+  Future<void> clearPortfolio() async {
+    _holdings.clear();
+    notifyListeners();
+    await _persist();
+  }
+
+  /// Wipes the trade feed only.
+  Future<void> clearActivity() async {
+    _activity.clear();
+    notifyListeners();
+    await _persist();
+  }
+
   static String _entryId() =>
       DateTime.now().microsecondsSinceEpoch.toRadixString(36) + (99 + DateTime.now().millisecond).toRadixString(36);
 
