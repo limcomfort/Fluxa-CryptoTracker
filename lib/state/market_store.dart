@@ -9,12 +9,30 @@ import '../data/market_repository.dart';
 import '../models/models.dart';
 import 'formatters.dart' as fmt;
 
-/// Root-side UI state: selected bottom tab.
+/// Root-side UI state: selected bottom tab + in-shell detail navigation
+/// (the detail screen is shown as a layer above the tabs while the bottom
+/// navigation bar stays visible, exactly like the mockups).
 class UiState extends ChangeNotifier {
   int tab = 0;
+  String? detailAssetId;
+  bool converterOpen = false;
+
   void setTab(int t) {
-    if (t == tab) return;
+    if (t == tab && detailAssetId == null) return;
+    detailAssetId = null;
     tab = t;
+    notifyListeners();
+  }
+
+  void openDetail(String assetId) {
+    detailAssetId = assetId;
+    tab = 0; // the mock detail lives under the Markets tab icon
+    notifyListeners();
+  }
+
+  void closeDetail() {
+    if (detailAssetId == null) return;
+    detailAssetId = null;
     notifyListeners();
   }
 }
