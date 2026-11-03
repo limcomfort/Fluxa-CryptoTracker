@@ -9,7 +9,7 @@ import '../../widgets/common.dart';
 import '../converter/converter_screen.dart' show openConverter;
 import '../search/search_screen.dart';
 
-enum MarketFilter { all, favorites, gainers, losers }
+enum MarketFilter { all, favorites, topVolume }
 
 class MarketsScreen extends StatefulWidget {
   const MarketsScreen({super.key});
@@ -27,10 +27,11 @@ class _MarketsScreenState extends State<MarketsScreen> {
         return store.assets;
       case MarketFilter.favorites:
         return store.favoriteAssets;
-      case MarketFilter.gainers:
-        return store.gainers.take(10).toList();
-      case MarketFilter.losers:
-        return store.losers.take(10).toList();
+      case MarketFilter.topVolume:
+        // Most traded assets of the day, descending by 24h turnover.
+        final byVolume = [...store.assets]
+          ..sort((a, b) => b.volume24h.compareTo(a.volume24h));
+        return byVolume.take(25).toList();
     }
   }
 
@@ -90,8 +91,7 @@ class _MarketsScreenState extends State<MarketsScreen> {
                           label: switch (f) {
                             MarketFilter.all => 'Все',
                             MarketFilter.favorites => 'Избранное',
-                            MarketFilter.gainers => 'Растущие',
-                            MarketFilter.losers => 'Падающие',
+                            MarketFilter.topVolume => 'Топ по объёму',
                           },
                           selected: filter == f,
                           onTap: () => setState(() => filter = f),
