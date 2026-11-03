@@ -347,10 +347,20 @@ class _AboutTile extends StatelessWidget {
 
   Widget _sheetRow(String k, String v) => Padding(
         padding: const EdgeInsets.only(bottom: 12),
-        child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text(k, style: AppText.body),
-          Text(v, style: const TextStyle(color: AppColors.text, fontWeight: FontWeight.w600)),
-        ]),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(k, style: AppText.body),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Text(
+                v,
+                textAlign: TextAlign.right,
+                style: const TextStyle(color: AppColors.text, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
       );
 }
 
@@ -402,7 +412,7 @@ class _SeriesAsset2 extends StatelessWidget {
   }
 }
 
-class PriceChart extends StatelessWidget {
+class PriceChart extends StatefulWidget {
   const PriceChart({
     super.key,
     required this.candles,
@@ -420,31 +430,103 @@ class PriceChart extends StatelessWidget {
   final double lastPrice;
   final double height;
 
+  @override
+  State<PriceChart> createState() => _PriceChartState();
+}
+
+/// Interactive chart: pinch to zoom the time window, one-finger drag
+/// to pan, double-tap to reset. The Y axis auto-fits the visible part.
+class _PriceChartState extends State<PriceChart> {
   static const double rightReserved = 62;
   static const double bottomReserved = 30;
+  static const double minVisible = 6;
+
+  double _count = 0; // visible data points
+  double _start = 0; // left edge of the visible window (index)
+  double _chartW = 1; // drawable width, updated by LayoutBuilder
+
+  // zoom-gesture context
+  double _gCount = 0, _gX = 0, _anchor = 0;
+
+  double get _n => (widget.candles?.length ?? widget.points?.length ?? 0).toDouble();
+
+  void _reset() {
+    final n = _n;
+    _count = n;
+    _start = 0;
+  }
+
+  void _onScaleStart(ScaleStartDetails d) {
+    final n = _n;
+    _gCount = _count;
+    _gX = d.localFocalPoint.dx;
+    _anchor = (_start + _gX / _chartW * _count).clamp(0.0, n);
+  }
+
+  void _onScaleUpdate(ScaleUpdateDetails d) {
+    final n = _n;
+    final scale = d.scale > 0 ? d.scale : 1.0;
+    final newCount = (_gCount / scale).clamp(minVisible, n);
+    final newStart = (_anchor - d.localFocalPoint.dx / _chartW * newCount).clamp(0.0, n - newCount);
+    if ((newCount - _count).abs() > 1e-6 || (newStart - _start).abs() > 1e-6) {
+      setState(() {
+        _count = newCount;
+        _start = newStart;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _reset();
+  }
+
+  @override
+  void didUpdateWidget(covariant PriceChart old) {
+    super.didUpdateWidget(old);
+    if (old.mode != widget.mode || old.range != widget.range || _n != _count) {
+      _reset();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Train values for the axis window.
+    final height = widget.height;
+    final range = widget.range;
+    final lastPrice = widget.lastPrice;
+    final n = _n.round();
+    if (n == 0) return SizedBox(height: height);
+
+    final vis = _count.clamp(minVisible, n.toDouble());
+    final i0 = _start.clamp(0.0, n - vis).floor();
+    final i1 = (i0 + vis).round().clamp(i0 + 1, n);
+    final candles = widget.candles?.sublist(i0, i1);
+    final points = widget.points?.sublist(i0, i1);
+    final showsNow = i1 >= n; // window touches the latest data
+
+    // Trim values for the axis window.
     double minV, maxV;
-    if (candles != null && candles!.isNotEmpty) {
-      minV = candles!.first.l;
-      maxV = candles!.first.h;
-      for (final c in candles!) {
+    if (candles != null && candles.isNotEmpty) {
+      minV = candles.first.l;
+      maxV = candles.first.h;
+      for (final c in candles) {
         if (c.l < minV) minV = c.l;
         if (c.h > maxV) maxV = c.h;
       }
-    } else if (points != null && points!.isNotEmpty) {
-      minV = maxV = points!.first.p;
-      for (final p in points!) {
+    } else if (points != null && points.isNotEmpty) {
+      minV = maxV = points.first.p;
+      for (final p in points) {
         if (p.p < minV) minV = p.p;
         if (p.p > maxV) maxV = p.p;
       }
     } else {
       return SizedBox(height: height);
     }
-    minV = math.min(minV, lastPrice);
-    maxV = math.max(maxV, lastPrice);
+    if (showsNow) {
+      minV = math.min(minV, lastPrice);
+      maxV = math.max(maxV, lastPrice);
+    }
     var span = (maxV - minV).abs();
     if (span < 1e-9) span = maxV * 0.01 + 1e-9;
     minV -= span * 0.08;
@@ -460,6 +542,7 @@ class PriceChart extends StatelessWidget {
       gridMax: gridMax,
       step: step,
       lastPrice: lastPrice,
+      showLast: showsNow,
       range: range,
       n: candles?.length ?? points!.length,
     );
@@ -471,40 +554,53 @@ class PriceChart extends StatelessWidget {
           Positioned.fill(
             right: rightReserved,
             bottom: bottomReserved,
-            child: candles != null
-                ? CustomPaint(
-                    painter: _CandleChartPainter(geom, candles!),
-                    size: Size(double.infinity, height),
-                  )
-                : _buildLineChart(context, geom, points!),
+            child: LayoutBuilder(
+              builder: (context, c) {
+                _chartW = math.max(1.0, c.maxWidth);
+                return GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onScaleStart: _onScaleStart,
+                  onScaleUpdate: _onScaleUpdate,
+                  onDoubleTap: () => setState(_reset),
+                  child: candles != null
+                      ? CustomPaint(
+                          painter: _CandleChartPainter(geom, candles),
+                          size: Size(double.infinity, height),
+                        )
+                      : _buildLineChart(context, geom, points!),
+                );
+              },
+            ),
           ),
-          // Current-price badge, identical for both modes.
-          Positioned(
-            top: (geom.yFrac(lastPrice) * height - 12).clamp(0.0, height - 24),
-            right: rightReserved + 4,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.accent,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.accent.withValues(alpha: 0.35),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
+          // Current-price badge, identical for both modes; only meaningful
+          // while the window shows the latest data.
+          if (showsNow)
+            Positioned(
+              top: (geom.yFrac(lastPrice) * height - 12).clamp(0.0, height - 24),
+              right: rightReserved + 4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.accent,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.accent.withValues(alpha: 0.35),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  fmt.fmtPricePlain(lastPrice),
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
                   ),
-                ],
-              ),
-              child: Text(
-                fmt.fmtPricePlain(lastPrice),
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -568,7 +664,7 @@ class PriceChart extends StatelessWidget {
                 if (!ticks.contains(idx)) return const SizedBox.shrink();
                 return Padding(
                   padding: const EdgeInsets.only(top: 6),
-                  child: Text(_xLabel(pts[idx].t, range), style: AppText.micro),
+                  child: Text(_xLabel(pts[idx].t, widget.range), style: AppText.micro),
                 );
               },
             ),
@@ -589,14 +685,16 @@ class PriceChart extends StatelessWidget {
           ),
         ],
         extraLinesData: ExtraLinesData(
-          horizontalLines: [
-            HorizontalLine(
-              y: lastPrice,
-              color: AppColors.accent,
-              strokeWidth: 1.2,
-              dashArray: [6, 5],
-            ),
-          ],
+          horizontalLines: geom.showLast
+              ? [
+                  HorizontalLine(
+                    y: geom.lastPrice,
+                    color: AppColors.accent,
+                    strokeWidth: 1.2,
+                    dashArray: [6, 5],
+                  ),
+                ]
+              : const [],
         ),
       ),
     );
@@ -609,6 +707,7 @@ class _Geom {
     required this.gridMax,
     required this.step,
     required this.lastPrice,
+    required this.showLast,
     required this.range,
     required this.n,
   });
@@ -616,6 +715,7 @@ class _Geom {
   final double gridMax;
   final double step;
   final double lastPrice;
+  final bool showLast; // whether the latest price is inside the visible window
   final ChartRange range;
   final int n;
 
@@ -711,14 +811,16 @@ class _CandleChartPainter extends CustomPainter {
       );
     }
 
-    // dashed current price line
-    final y = geom.yFrac(geom.lastPrice) * size.height;
-    final dash = Paint()
-      ..color = AppColors.accent
-      ..strokeWidth = 1.2;
-    const gap = 6.0;
-    for (var x = 0.0; x < size.width; x += gap * 2) {
-      canvas.drawLine(Offset(x, y), Offset(math.min(x + gap, size.width), y), dash);
+    // dashed current price line (only when the window touches "now")
+    if (geom.showLast) {
+      final y = geom.yFrac(geom.lastPrice) * size.height;
+      final dash = Paint()
+        ..color = AppColors.accent
+        ..strokeWidth = 1.2;
+      const gap = 6.0;
+      for (var x = 0.0; x < size.width; x += gap * 2) {
+        canvas.drawLine(Offset(x, y), Offset(math.min(x + gap, size.width), y), dash);
+      }
     }
   }
 

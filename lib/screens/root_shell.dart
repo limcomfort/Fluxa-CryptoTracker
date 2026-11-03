@@ -7,14 +7,15 @@ import '../state/market_store.dart';
 import 'activity/activity_screen.dart';
 import 'markets/asset_detail_screen.dart';
 import 'markets/markets_screen.dart';
+import 'movers/movers_screen.dart';
 import 'portfolio/portfolio_screen.dart';
-import 'watchlist/watchlist_screen.dart';
+
 class RootShell extends StatelessWidget {
   const RootShell({super.key});
 
   static const _pages = [
     MarketsScreen(),
-    WatchlistScreen(),
+    MoversScreen(),
     PortfolioScreen(),
     ActivityScreen(),
   ];
@@ -60,9 +61,9 @@ class RootShell extends StatelessWidget {
                 label: 'Рынки',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.star_border),
-                activeIcon: Icon(Icons.star),
-                label: 'Избранное',
+                icon: Icon(Icons.trending_up_outlined),
+                activeIcon: Icon(Icons.trending_up),
+                label: 'Лидеры',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.donut_large_outlined),

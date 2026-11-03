@@ -410,8 +410,8 @@ class MarketStore extends ChangeNotifier {
     _signals
       ..clear()
       ..addAll([
-        sig(SignalKind.up, 'BTC: импульс вверх', 'Пробил трек VWAP за 24ч — тренд цел', 'bitcoin', 'BTC', ago(const Duration(minutes: 38))),
-        sig(SignalKind.down, 'Рынок в защите', 'Совокупная капитализация придавлена ходом мейджоров за 24ч', 'ethereum', 'ETH', ago(const Duration(hours: 4))),
+        sig(SignalKind.up, 'BTC: импульс вверх', 'Сильный рост за 24ч — восходящий тренд сохраняется', 'bitcoin', 'BTC', ago(const Duration(minutes: 38))),
+        sig(SignalKind.down, 'Рынок в защите', 'Капитализация снижается — крупные монеты давят на рынок', 'ethereum', 'ETH', ago(const Duration(hours: 4))),
         sig(SignalKind.up, 'ETH тестирует максимум 24ч', 'Удерживает верх диапазона при растущем объёме', 'ethereum', 'ETH', ago(const Duration(hours: 9))),
         sig(SignalKind.watch, 'Отслеживаем 0.0521 BTC', 'Кол-во 0.0521 · средняя 55,729.42', 'bitcoin', 'BTC', ago(const Duration(hours: 26))),
         sig(SignalKind.watch, 'Отслеживаем 1.204 ETH', 'Кол-во 1.204 · средняя 2,988.10', 'ethereum', 'ETH', ago(const Duration(hours: 27))),

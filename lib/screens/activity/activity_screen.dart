@@ -197,14 +197,14 @@ class _PulseSummary extends StatelessWidget {
           _PulseCard(
             icon: Icons.north_east_rounded,
             color: AppColors.green,
-            label: 'Бычьи',
+            label: 'Рост',
             value: '$ups',
           ),
           const SizedBox(width: 10),
           _PulseCard(
             icon: Icons.south_east_rounded,
             color: AppColors.red,
-            label: 'Медвежьи',
+            label: 'Падение',
             value: '$downs',
           ),
           const SizedBox(width: 10),

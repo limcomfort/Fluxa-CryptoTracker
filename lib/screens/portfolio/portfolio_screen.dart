@@ -278,7 +278,7 @@ class _MoversStrip extends StatelessWidget {
     return Row(children: [
       tile('Лучший актив', item: best, isTop: true),
       const SizedBox(width: 10),
-      tile('Слабейший актив', item: flop, isTop: false),
+      tile('Отстающий актив', item: flop, isTop: false),
     ]);
   }
 }
